@@ -320,8 +320,8 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 		else:
 			self.figure = self.test_figures[self.figure_name]
 			self.figure.animate_target_time = self.animate_time
-			self.figure.render()
 			self.figure.prepare_animation()
+		self.figure.render()
 
 		# Initialize origin position and origin boundaries based on the loaded figure
 		self.origin_pos = list(self.figure.points[0])
@@ -344,11 +344,13 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 		while start_delay.counting():
 			ui_request()
 			fill()
+			if P.show_figure_at_onset:
+				blit(self.figure.rendered, 5, P.screen_c)
 			blit(self.tracker_dot, 5, self.origin_pos)
 			flip()
 
 		animate_start = time.perf_counter()
-		self.figure.animate()
+		self.figure.animate(self.tracker_dot, P.show_figure_at_onset)
 		animate_time = time.perf_counter() - animate_start
 		avg_velocity = self.figure.path_length / animate_time
 
@@ -617,7 +619,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 				while True:
 
 					# Animate figure on screen with dot, then show full rendered shape
-					figure.animate()
+					figure.animate(self.tracker_dot)
 					animation_dur = round(figure.trial_a_frames[-1][2] * 1000, 2)
 					msg = message("Press any key to continue.", blit_txt=False)
 					msg_time = message("Duration: {0} ms".format(animation_dur), blit_txt=False)

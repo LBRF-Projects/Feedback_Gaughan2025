@@ -620,7 +620,7 @@ class TraceLabFigure(EnvAgent):
 		self.a_frames = self.segments_to_frames(self.raw_segments, duration, fps=P.refresh_rate)
 
 
-	def animate(self):
+	def animate(self, cursor, show_figure=False):
 
 		start = None
 		updated_a_frames = []
@@ -628,9 +628,9 @@ class TraceLabFigure(EnvAgent):
 
 			ui_request()
 			fill()
-			if P.demo_mode:
+			if show_figure:
 				blit(self.rendered, 5, P.screen_c, flip_x=P.flip_x)
-			blit(self.exp.tracker_dot, 5, f, flip_x=P.flip_x)
+			blit(cursor, 5, f, flip_x=P.flip_x)
 			flip()
 
 			if start is None:
