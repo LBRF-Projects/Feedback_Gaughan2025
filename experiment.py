@@ -26,7 +26,7 @@ from klibs.KLResponseCollectors import DrawResponse
 from TraceLabSession import TraceLabSession
 from TraceLabFigure import TraceLabFigure, save_figure
 from ButtonBar import ButtonBar
-from KeyFrames import FrameSet
+from instructions import play_tutorial
 
 
 WHITE = (255, 255, 255, 255)
@@ -208,11 +208,6 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 			MOTR: block_msg_tmp.format("match the speed"),
 			CTRL: block_msg_tmp.format("take your time"),
 		}
-		self.instruction_files = {
-			PHYS: {'frames': "physical_key_frames"},
-			MOTR: {'frames': "imagery_key_frames"},
-			CTRL: {'frames': "control_key_frames"}
-		}
 		self.practice_instructions = message(
 			P.practice_instructions, "instructions",
 			align="center", blit_txt=False
@@ -248,12 +243,8 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 		# previous block, do tutorial animation and practice
 		if self.response_type != self.prev_response_type:
 
-			# Load instructions for new response type
-			new_instructions = self.instruction_files[self.response_type]
-
+			# Play tutorial for current response type & enter practice
 			if P.enable_practice:
-				# Load tutorial animation for current condition, play it, and enter practice
-				self.tutorial = FrameSet(new_instructions['frames'], "assets")
 				if P.block_number == 1:
 					fill()
 					blit(self.practice_instructions, 5, P.screen_c)
@@ -261,7 +252,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 					any_key()
 				else:
 					self.start_trial_button()
-				self.tutorial.play()
+				play_tutorial(self, self.response_type)
 				self.practice_menu()
 
 			self.prev_response_type = self.response_type
@@ -667,7 +658,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 		while choice != "Begin":
 			choice, rt = self.practice_button_bar.collect()
 			if choice == "Replay":
-				self.tutorial.play()
+				play_tutorial(self, self.response_type)
 			elif choice == "Practice":
 				self.__practice__()
 
