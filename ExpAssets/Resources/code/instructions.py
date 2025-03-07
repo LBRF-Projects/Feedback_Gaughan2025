@@ -1,11 +1,12 @@
 import os
 import sdl2.sdlmixer as mixer
+from sdl2.ext import cursor_hidden
 
 from klibs import P
 from klibs.KLUtilities import scale
 from klibs.KLTime import CountDown
 from klibs.KLEventQueue import pump, flush
-from klibs.KLUserInterface import any_key, key_pressed
+from klibs.KLUserInterface import any_key, key_pressed, hide_cursor, show_cursor
 from klibs.KLGraphics import fill, flip, blit, NumpySurface
 from klibs.KLGraphics import KLDraw as kld
 from klibs.KLCommunication import message
@@ -696,6 +697,9 @@ def task_demo_cc(exp):
 
 
 def play_tutorial(exp, trial_type):
+
+    cursor_was_shown = cursor_hidden() == False
+    hide_cursor()
     try:
         if trial_type == "physical":
             task_demo_pp(exp)
@@ -709,3 +713,7 @@ def play_tutorial(exp, trial_type):
     except SkipException:
         # Instructions can be skipped by pressing the delete key
         pass
+
+    # If cursor was visible before tutorial, unhide it after
+    if cursor_was_shown:
+        show_cursor()
