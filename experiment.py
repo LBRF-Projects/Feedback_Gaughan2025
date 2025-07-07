@@ -11,8 +11,8 @@ from sdl2 import SDL_MOUSEBUTTONDOWN, SDL_KEYDOWN
 
 import klibs
 from klibs import P
-from klibs.KLConstants import RECT_BOUNDARY, CIRCLE_BOUNDARY, STROKE_OUTER, QUERY_UPD
-from klibs.KLBoundary import BoundaryInspector
+from klibs.KLConstants import RECT_BOUNDARY, STROKE_OUTER
+from klibs.KLBoundary import BoundaryInspector, CircleBoundary
 from klibs.KLTime import CountDown
 from klibs.KLUserInterface import any_key, ui_request, show_cursor, hide_cursor
 from klibs.KLUtilities import pump, flush, scale, now, mouse_pos, utf8
@@ -21,11 +21,11 @@ from klibs.KLGraphics import blit, fill, flip
 from klibs.KLGraphics.KLDraw import Ellipse, Rectangle
 from klibs.KLText import add_text_style
 from klibs.KLCommunication import user_queries, message, query
-from klibs.KLResponseCollectors import DrawResponse
 
 from TraceLabSession import TraceLabSession
 from TraceLabFigure import TraceLabFigure, save_figure
 from ButtonBar import ButtonBar
+from responselisteners import DrawingListener, render_tracing
 from instructions import play_tutorial
 
 
@@ -33,9 +33,7 @@ WHITE = (255, 255, 255, 255)
 BLACK = (0, 0, 0, 255)
 RED = (255, 0, 0, 255)
 GREEN = (0, 255, 0, 255)
-BOT_L = 0
-TOP_L = 1
-TOP_R = 2
+TRACE_COLOUR = (255, 80, 125, 255)
 
 # condition codes; jon hates retyping strings
 PHYS = "physical"
@@ -120,14 +118,8 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 		self.animate_time = P.practice_animation_time
 
 		self.__practicing__ = True
-		self.setup_response_collector()
 		self.trial_prep()
-		self.evm.start()
-		try:
-			self.trial()
-		except:
-			pass
-		self.evm.reset()
+		self.trial()
 		self.trial_clean_up()
 		self.__practicing__ = False
 
@@ -192,6 +184,9 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 			message_txt = P.control_q
 		)
 
+		# Initialize the drawing response listener
+		self.draw_listener = DrawingListener(loop_callback=self.display_refresh)
+
 		# Initialize 'next trial' button
 		button_x = 250 if self.handedness == LEFT_HANDED else P.screen_x - 250
 		button_y = P.screen_y - 100
@@ -220,10 +215,8 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 		# Determine whether cursor should be shown or hidden
 		touchscreen = touchscreen_detected()
 		if P.force_show_cursor or (P.development_mode and not touchscreen):
-			self.show_cursor = True
 			show_cursor()
 		else:
-			self.show_cursor = False
 			hide_cursor()
 
 		# Import all pre-generated figures needed for the current session
@@ -278,23 +271,6 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 		any_key()
 
 
-	def setup_response_collector(self):
-
-		self.rc.uses(DrawResponse)
-		self.rc.terminate_after = [120, klibs.TK_S] # Wait really long before timeout
-		self.rc.draw_listener.start_boundary = 'start'
-		self.rc.draw_listener.stop_boundary = 'stop'
-		self.rc.draw_listener.show_active_cursor = self.show_cursor
-		self.rc.draw_listener.show_inactive_cursor = self.show_cursor
-		self.rc.draw_listener.origin = self.origin_pos
-		self.rc.draw_listener.interrupts = True
-		self.rc.draw_listener.min_samples = 5
-		self.rc.display_callback = self.display_refresh
-
-		if self.feedback_type in (FB_DRAW, FB_ALL):
-			self.rc.draw_listener.render_real_time = True
-
-
 	def trial_prep(self):
 
 		# If reloading incomplete block, update trial number accordingly
@@ -323,14 +299,9 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 
 		# Initialize origin position and origin boundaries based on the loaded figure
 		self.origin_pos = list(self.figure.points[0])
-		if P.flip_x:
-			self.origin_pos[0] = P.screen_x - self.origin_pos[0]
-		self.origin_boundary = [self.origin_pos, P.origin_size // 2]
-		self.add_boundary("origin", self.origin_boundary, CIRCLE_BOUNDARY)
-		self.rc.draw_listener.add_boundaries([
-			('start', self.origin_boundary, CIRCLE_BOUNDARY),
-			('stop', self.origin_boundary, CIRCLE_BOUNDARY)
-		])
+		origin_bounds = CircleBoundary('origin', self.origin_pos, P.origin_size // 2)
+		self.add_boundary(origin_bounds)
+		self.draw_listener.set_origin(origin_bounds)
 
 		# Let participant self-initiate next trial
 		self.start_trial_button()
@@ -400,7 +371,6 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 		if not self.__practicing__:
 			outpath = os.path.join(self.fig_dir, self.file_name + ".zip")
 			save_figure(outpath, self.figure, self.drawing)
-		self.rc.draw_listener.reset()
 
 
 	def clean_up(self):
@@ -413,13 +383,9 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 			learned_fig_num = 1
 			if query(user_queries.experimental[3]) == "y":
 				self.origin_pos = (P.screen_c[0], int(P.screen_y * 0.8))
-				self.origin_boundary = [self.origin_pos, P.origin_size // 2]
+				origin = CircleBoundary('origin', self.origin_pos, P.origin_size // 2)
+				self.draw_listener.set_origin(origin)
 				while True:
-					self.setup_response_collector()
-					self.rc.draw_listener.add_boundaries([
-						('start', self.origin_boundary, CIRCLE_BOUNDARY),
-						('stop', self.origin_boundary, CIRCLE_BOUNDARY)
-					])
 					self.start_trial_button()
 					self.capture_learned_figure(learned_fig_num)
 					if query(user_queries.experimental[4]) == "y":
@@ -472,14 +438,11 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 	def display_refresh(self):
 
 		fill()
-		origin = self.origin_active if self.rc.draw_listener.active else self.origin_inactive
+		origin = self.origin_active if self.draw_listener.started else self.origin_inactive
 		blit(origin, 5, self.origin_pos, flip_x=P.flip_x)
 		if P.dm_render_progress or self.feedback_type in (FB_ALL, FB_DRAW):
-			try:
-				drawing = self.rc.draw_listener.render_progress()
-				blit(drawing, 5, P.screen_c, flip_x=P.flip_x)
-			except TypeError:
-				pass
+			drawing = render_tracing(self.draw_listener.points, TRACE_COLOUR, 1)
+			blit(drawing, 7, (0, 0))
 		flip()
 
 
@@ -512,11 +475,9 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 
 	def physical_trial(self):
 
-		self.rc.collect()
-		self.rt = self.rc.draw_listener.start_time
-		self.drawing = self.rc.draw_listener.responses[0][0]
-		self.it = self.rc.draw_listener.first_sample_time - self.rt
-		self.mt = self.rc.draw_listener.responses[0][1]
+		self.display_refresh()
+		resp = self.draw_listener.collect()
+		self.drawing, self.rt, self.it, self.mt = resp
 
 
 	def control_trial(self):
@@ -637,13 +598,11 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 
 	def capture_learned_figure(self, fig_number):
 
-		self.evm.start()
 		outfile = "p{0}_learned_figure_{1}.zip".format(P.participant_id, fig_number)
 		outpath = os.path.join(self.fig_dir, outfile)
-		self.rc.draw_listener.reset()
-		self.rc.collect()
-		save_figure(outpath, tracing=self.rc.draw_listener.responses[0][0])
-		self.evm.reset()
+		self.display_refresh()
+		learned = self.draw_listener.collect()[0]
+		save_figure(outpath, tracing=learned)
 
 
 	def practice_menu(self):
