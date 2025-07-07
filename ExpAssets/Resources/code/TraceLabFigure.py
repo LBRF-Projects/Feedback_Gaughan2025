@@ -637,7 +637,7 @@ class TraceLabFigure(EnvAgent):
 				timestamp = 0.0
 				start = time()
 			else:
-				timestamp = time() - start
+				timestamp = round(time() - start, 7)
 			updated_a_frames.append((f[0], f[1], timestamp))
 
 		self.trial_a_frames = updated_a_frames
