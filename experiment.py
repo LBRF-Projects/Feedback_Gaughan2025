@@ -2,9 +2,9 @@
 __author__ = "Jonathan Mulle"
 
 import os
-import io
 import time
 import sdl2
+import OpenGL.GL as gl
 
 from random import choice
 from sdl2 import SDL_MOUSEBUTTONDOWN, SDL_KEYDOWN
@@ -17,7 +17,7 @@ from klibs.KLTime import CountDown, precise_time
 from klibs.KLUserInterface import any_key, ui_request, show_cursor, hide_cursor
 from klibs.KLUtilities import pump, flush, scale, now, mouse_pos, utf8
 from klibs.KLUtilities import colored_stdout as cso
-from klibs.KLGraphics import blit, fill, flip
+from klibs.KLGraphics import blit, fill, flip, rgb_to_rgba
 from klibs.KLGraphics.KLDraw import Ellipse, Rectangle
 from klibs.KLText import add_text_style
 from klibs.KLCommunication import user_queries, message, query
@@ -267,6 +267,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 			ui_request()
 			fill()
 			blit(block_msg, 5, P.screen_c, flip_x=P.flip_x)
+			draw_borders(P.border_size, WHITE)
 			flip()
 		any_key()
 
@@ -318,6 +319,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 			if P.show_figure_at_onset:
 				blit(self.figure.rendered, 5, P.screen_c)
 			blit(self.tracker_dot, 5, self.origin_pos)
+			draw_borders(P.border_size, WHITE)
 			flip()
 
 		animate_start = time.perf_counter()
@@ -336,12 +338,14 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 			flush()
 			fill()
 			blit(self.figure.render(trace=self.drawing), 5, P.screen_c)
+			draw_borders(P.border_size, WHITE)
 			flip()
 			start = time.time()
 			while time.time() - start < P.feedback_duration / 1000.0:
 				ui_request()
 
 		fill()
+		draw_borders(P.border_size, WHITE)
 		flip()
 
 		if self.__practicing__:
@@ -422,6 +426,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 	def start_trial_button(self):
 
 		fill()
+		draw_borders(P.border_size, WHITE)
 		blit(self.next_trial_box, 5, self.next_trial_button_loc, flip_x=P.flip_x)
 		blit(self.next_trial_msg, 5, self.next_trial_button_loc, flip_x=P.flip_x)
 		flip()
@@ -437,7 +442,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 					ui_request(e.key.keysym)
 
 
-	def animate_figure(self, figure, show_figure=False):
+	def animate_figure(self, figure, show_figure=False, borders=True):
 
 		start = None
 		frames = []
@@ -448,6 +453,8 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 			if show_figure:
 				blit(figure.rendered, 5, P.screen_c)
 			blit(self.tracker_dot, 5, f)
+			if borders:
+				draw_borders(P.border_size, WHITE)
 			flip()
 
 			if start is None:
@@ -463,6 +470,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 	def display_refresh(self):
 
 		fill()
+		draw_borders(P.border_size, WHITE)
 		origin = self.origin_active if self.draw_listener.started else self.origin_inactive
 		blit(origin, 5, self.origin_pos, flip_x=P.flip_x)
 		if P.dm_render_progress or self.feedback_type in (FB_ALL, FB_DRAW):
@@ -477,6 +485,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 	def imagery_trial(self):
 
 		fill()
+		draw_borders(P.border_size, WHITE)
 		blit(self.origin_inactive, 5, self.origin_pos, flip_x=P.flip_x)
 		flip()
 
@@ -490,6 +499,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 				self.rt = time.perf_counter() - start
 			ui_request()
 		fill()
+		draw_borders(P.border_size, WHITE)
 		blit(self.origin_active, 5, self.origin_pos, flip_x=P.flip_x)
 		flip()
 
@@ -592,7 +602,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 				while True:
 
 					# Animate figure on screen with dot, then show full rendered shape
-					frames = self.animate_figure(figure, P.show_figure_at_onset)
+					frames = self.animate_figure(figure, P.show_figure_at_onset, borders=False)
 					animation_dur = round(frames[-1][2] * 1000, 2)
 					msg = message("Press any key to continue.", blit_txt=False)
 					msg_time = message("Duration: {0} ms".format(animation_dur), blit_txt=False)
@@ -669,6 +679,35 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 		]
 		return "p{0}_s{4}_b{1}_t{2}_{3}".format(*file_name_data)
 
+
+
+def fast_rect(x1, y1, x2, y2, color):
+	"""Draws a solid rectangle of a given colour quickly to the screen.
+
+	This draws a rectangle directly to the backbuffer, avoiding the need to create a
+	texture and copy it to the GPU every frame and thus making it much faster for large
+	rectangles. Useful when timing is important.
+
+	"""
+	# Sets the draw colour for the rectangle
+	r, g, b, a = rgb_to_rgba(color)
+	gl.glColor4ub(r, g, b, a)
+	# Draws the rectangle directly to the backbuffer
+	gl.glBegin(gl.GL_TRIANGLE_STRIP)
+	gl.glVertex2f(x1, y1)
+	gl.glVertex2f(x1, y2)
+	gl.glVertex2f(x2, y1)
+	gl.glVertex2f(x2, y2)
+	gl.glEnd()
+
+
+def draw_borders(size, color=WHITE):
+	# Draws borders to the screen edges to make them clearly visible
+	w, h = P.screen_x_y
+	fast_rect(0, 0, w, size, color) # top
+	fast_rect(0, 0, size, h, color) # left
+	fast_rect(0, h - size, w, h, color) # bottom
+	fast_rect(w - size, 0, w, h, color) # right
 
 
 def touchscreen_detected():
