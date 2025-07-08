@@ -13,7 +13,7 @@ import klibs
 from klibs import P
 from klibs.KLConstants import RECT_BOUNDARY, STROKE_OUTER
 from klibs.KLBoundary import BoundaryInspector, CircleBoundary
-from klibs.KLTime import CountDown
+from klibs.KLTime import CountDown, precise_time
 from klibs.KLUserInterface import any_key, ui_request, show_cursor, hide_cursor
 from klibs.KLUtilities import pump, flush, scale, now, mouse_pos, utf8
 from klibs.KLUtilities import colored_stdout as cso
@@ -288,6 +288,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 		self.figure = None
 		self.drawing = None
 		self.live_feedback = None
+		self.a_frames = [] # figure animation frames
 
 		# Either load a pre-generated figure or generate a new one, depending on trial
 		if self.figure_name == "random":
@@ -320,7 +321,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 			flip()
 
 		animate_start = time.perf_counter()
-		self.figure.animate(self.tracker_dot, P.show_figure_at_onset)
+		self.a_frames = self.animate_figure(self.figure, P.show_figure_at_onset)
 		animate_time = time.perf_counter() - animate_start
 		avg_velocity = self.figure.path_length / animate_time
 
@@ -371,7 +372,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 
 		if not self.__practicing__:
 			outpath = os.path.join(self.fig_dir, self.file_name + ".zip")
-			save_figure(outpath, self.figure, self.drawing)
+			save_figure(outpath, self.figure, self.a_frames, self.drawing)
 
 
 	def clean_up(self):
@@ -434,6 +435,29 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 					clicked = self.within_boundary("next trial button", [e.button.x, e.button.y])
 				elif e.type == SDL_KEYDOWN:
 					ui_request(e.key.keysym)
+
+
+	def animate_figure(self, figure, show_figure=False):
+
+		start = None
+		frames = []
+		for f in figure.a_frames:
+
+			ui_request()
+			fill()
+			if show_figure:
+				blit(figure.rendered, 5, P.screen_c)
+			blit(self.tracker_dot, 5, f)
+			flip()
+
+			if start is None:
+				timestamp = 0.0
+				start = precise_time()
+			else:
+				timestamp = round(precise_time() - start, 7)
+			frames.append((f[0], f[1], timestamp))
+
+		return frames
 
 
 	def display_refresh(self):
@@ -568,8 +592,8 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 				while True:
 
 					# Animate figure on screen with dot, then show full rendered shape
-					figure.animate(self.tracker_dot)
-					animation_dur = round(figure.trial_a_frames[-1][2] * 1000, 2)
+					frames = self.animate_figure(figure, P.show_figure_at_onset)
+					animation_dur = round(frames[-1][2] * 1000, 2)
 					msg = message("Press any key to continue.", blit_txt=False)
 					msg_time = message("Duration: {0} ms".format(animation_dur), blit_txt=False)
 					fill()
