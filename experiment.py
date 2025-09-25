@@ -23,7 +23,7 @@ from klibs.KLText import add_text_style
 from klibs.KLCommunication import user_queries, message, query
 
 from TraceLabSession import TraceLabSession
-from TraceLabFigure import TraceLabFigure, save_figure
+from TraceLabFigure import TraceLabFigure, save_figure, save_template
 from ButtonBar import ButtonBar
 from responselisteners import DrawingListener, DrawSurface
 from instructions import play_tutorial
@@ -140,7 +140,6 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 
 		# If capture figures mode, generate, view, and optionally save some figures
 		if P.capture_figures_mode:
-			self.fig_dir = os.path.join(P.resources_dir, "figures")
 			self.capture_figures()
 			self.quit()
 
@@ -569,6 +568,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 		flip()
 		any_key()
 
+		template_dir = os.path.join(P.resources_dir, "figures")
 		if P.development_mode:
 			print("Random seed: {0}".format(P.random_seed))
 
@@ -584,9 +584,9 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 				flip()
 
 				figure = self._generate_figure(duration=5000.0)
-				outfile = "figure{0}_{1}.zip".format(i + 1, P.random_seed)
-				outpath = os.path.join(self.fig_dir, outfile)
-				save_figure(outpath, figure)
+				figname = "figure{0}_{1}".format(i + 1, P.random_seed)
+				outpath = os.path.join(template_dir, figname)
+				save_template(outpath, figure)
 
 		else:
 
@@ -624,13 +624,13 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 						done = True
 						break
 					elif resp == "s": # save
-						outfile = query(user_queries.experimental[7]) + ".zip"
-						outpath = os.path.join(self.fig_dir, outfile)
+						figname = query(user_queries.experimental[7])
+						outpath = os.path.join(template_dir, figname)
 						msg = message("Saving... ", blit_txt=False)
 						fill()
 						blit(msg, 5, P.screen_c)
 						flip()
-						save_figure(outpath, figure)
+						save_template(outpath, figure)
 						break
 
 
