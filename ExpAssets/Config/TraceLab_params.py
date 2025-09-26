@@ -114,12 +114,12 @@ control_q = "How many times did the dot change course {0}?"  # the {0} will cont
 generation_timeout = 0.5  # seconds
 
 generate_quadrant_intersections = True  # Not quite sure what this does
-outer_margin_v = 50  # minimum vertical distance figure points can be from screen margins (in px)
-outer_margin_h = 50  # minimum horizontal distance figure points can be from screen margins (in px)
+outer_margin_v = 120  # minimum vertical distance figure points can be from screen margins (in px)
+outer_margin_h = 80 # minimum horizontal distance figure points can be from screen margins (in px)
 inner_margin_v = 10  # minimum vertical distance figure points can be from screen center (in px)
 inner_margin_h = 10  # minimum horizontal distance figure points can be from screen center (in px)
-curve_margin_v = 10  # minimum distance from vertical screen margins for curve segments (in px)
-curve_margin_h = 10  # minimum distance from horizontal screen margins for curve segments (in px)
+curve_margin_v = 80  # minimum distance from vertical screen margins for curve segments (in px)
+curve_margin_h = 40  # minimum distance from horizontal screen margins for curve segments (in px)
 
 avg_seg_per_f = (4, 2)  # (avg, variance) for number of segments per figure
 avg_seg_per_q = (2, 1)  # (avg, variance) for number of segments per quadrant
