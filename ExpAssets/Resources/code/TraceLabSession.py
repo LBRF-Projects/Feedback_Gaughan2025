@@ -28,11 +28,12 @@ from FigureSet import FigureSet
 
 
 PHYS = "physical"
-MOTR = "imagery"
+IMAG = "imagery"
 CTRL = "control"
-FB_DRAW = "drawing_feedback"
-FB_RES = "results_feedback"
-FB_ALL = "all_feedback"
+FB_DRAW = "live_tracing"
+FB_SHAPE = "shape_only"
+FB_RES = "results"
+FB_ALL = "all"
 
 
 
@@ -449,7 +450,7 @@ class TraceLabSession(EnvAgent):
 			# Validate feedback format
 			feedback = list(feedback)
 			for i in feedback:
-				if i not in ["V", "R", "X"] or len(feedback) > 2:
+				if i not in ["V", "R", "X", "S"] or len(feedback) > 2:
 					err_type = "bad_feedback"
 			# Validate condition format
 			if response not in ["PP", "MI", "CC"]:
@@ -462,13 +463,15 @@ class TraceLabSession(EnvAgent):
 
 		response, feedback = condition.split("-")
 
-		resp_map = {'PP': PHYS, 'MI': MOTR, 'CC': CTRL}
+		resp_map = {'PP': "physical", 'MI': "imagery", 'CC': "control"}
 		resp = resp_map[response]
 
 		if "V" in feedback and "R" in feedback:
 			fb = FB_ALL
 		elif "R" in feedback:
 			fb = FB_RES
+		elif "S" in feedback:
+			fb = FB_SHAPE
 		elif "V" in feedback:
 			fb = FB_DRAW
 		else:

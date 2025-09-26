@@ -37,13 +37,12 @@ TRACE_COLOUR = (255, 80, 125, 255)
 
 # condition codes; jon hates retyping strings
 PHYS = "physical"
-MOTR = "imagery"
+IMAG = "imagery"
 CTRL = "control"
-FB_DRAW = "drawing_feedback"
-FB_RES = "results_feedback"
-FB_ALL = "all_feedback"
-LEFT_HANDED = "l"
-RIGHT_HANDED = "r"
+FB_DRAW = "live_tracing"
+FB_SHAPE = "shape_only"
+FB_RES = "results"
+FB_ALL = "all"
 
 
 if __name__ == "__main__":
@@ -187,7 +186,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 		self.draw_listener = DrawingListener(loop_callback=self.display_refresh)
 
 		# Initialize 'next trial' button
-		button_x = 250 if self.handedness == LEFT_HANDED else P.screen_x - 250
+		button_x = 250 if self.handedness == "l" else P.screen_x - 250
 		button_y = P.screen_y - 100
 		self.next_trial_msg = message(P.next_trial_message, 'default', blit_txt=False)
 		self.next_trial_box = Rectangle(300, 75, stroke=(2, (255, 255, 255), STROKE_OUTER))
@@ -199,7 +198,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 		block_msg_tmp = "Remember to {0}!\n\nTap the screen to begin."
 		self.block_messages = {
 			PHYS: block_msg_tmp.format("match the speed"),
-			MOTR: block_msg_tmp.format("match the speed"),
+			IMAG: block_msg_tmp.format("match the speed"),
 			CTRL: block_msg_tmp.format("take your time"),
 		}
 		self.practice_instructions = message(
@@ -328,15 +327,16 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 
 		if self.response_type == PHYS:
 			self.physical_trial()
-		elif self.response_type == MOTR:
+		elif self.response_type == IMAG:
 			self.imagery_trial()
 		else:
 			self.control_trial()
 
-		if self.feedback_type in (FB_ALL, FB_RES) and not self.__practicing__:
+		if self.feedback_type in (FB_ALL, FB_RES, FB_SHAPE) and not self.__practicing__:
 			flush()
 			fill()
-			blit(self.figure.render(trace=self.drawing), 5, P.screen_c)
+			tracing = None if self.feedback_type == FB_SHAPE else self.drawing
+			blit(self.figure.render(trace=tracing), 5, P.screen_c)
 			draw_borders(P.border_size, WHITE)
 			flip()
 			start = time.time()
