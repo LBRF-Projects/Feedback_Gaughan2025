@@ -245,7 +245,6 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 
 		# Get response type and feedback type for block
 		self.response_type = self.block_factors[P.block_number - 1]['response_type']
-		self.feedback_type = self.block_factors[P.block_number - 1]['feedback_type']
 
 		# If on first block of session, or response type is different from response type of
 		# previous block, do tutorial animation and practice

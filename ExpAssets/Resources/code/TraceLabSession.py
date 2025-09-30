@@ -41,6 +41,13 @@ class TraceLabSession(EnvAgent):
 
 	def __init__(self):
 
+		# Get map of different possible block types
+		self.block_types = load_source(P.ind_vars_file_path)['block_types']
+		if os.path.exists(P.ind_vars_file_local_path):
+			if not P.dm_ignore_local_overrides:
+				local_types = load_source(P.ind_vars_file_local_path)['block_types']
+				self.block_types.update(local_types)
+
 		self.__user_id__ = None
 		self.__verify_session_structures()
 		self.__import_figure_sets()
@@ -100,40 +107,25 @@ class TraceLabSession(EnvAgent):
 
 	def __verify_session_structures(self):
 
-		error_strings = {
-			"bad_format": "Response type and feedback type must be separated by a single hyphen.",
-			"bad_condition": ("Response type must be either 'PP' (physical), 'MI' (imagery), "
-				"or 'CC' (control)."),
-			"bad_feedback": ("Feedback type must be one or two characters long, and be "
-				"a combination of the letters 'V', 'R' and / or 'X'."),
-			"bad_trialcount": ("Custom trial counts must be specified in (blocktype, trials) "
-				"format, where 'trials' is a positive integer."),
-		}
-
 		# Validate specified session structure to use, return informative error if formatted wrong
 		session_num, block_num = (0, 0)
-		e = "Error encountered parsing Block {0} of Session {1} in session structure '{2}' ({3}):"
+		e = "Error encountered parsing Block {0} of Session {1} in session structure '{2}': "
+		e += ' "{3}"'
 		for structure_key, session_structure in P.session_structures.items():
 			for session in session_structure:
 				session_num += 1
 				for block in session:
 					block_num += 1
-					if type(block) in [tuple, list]:
-						if isinstance(block[1], int) and block[1] > 0:
-							err = self.validate_block_condition(block[0])
-						else:
-							err = "bad_trialcount"
-					else:
-						err = self.validate_block_condition(block)
+					err = self.validate_block(block)
 					if err:
 						if isinstance(block, tuple):
 							block = list(block)
 						err_txt1 = e.format(block_num, session_num, structure_key, str(block))
-						err_txt1 += "\n" + error_strings[err]
+						err_txt1 += "\n\n" + err
 						msg1 = message(err_txt1, "error", align="center", blit_txt=False)
 						msg2 = message("Press any key to exit TraceLab.", blit_txt=False)
 						fill()
-						blit(msg1, 2, (P.screen_c[0], P.screen_c[1] - 30))
+						blit(msg1, 2, (P.screen_c[0], P.screen_c[1] - 60))
 						blit(msg2, 8, P.screen_c)
 						flip()
 						any_key()
@@ -277,12 +269,13 @@ class TraceLabSession(EnvAgent):
 
 		"""
 		blocks = []
-		exp_factors = self.exp.trial_factory.exp_factors
 		for block in current_session:
 			trials = P.trials_per_block
 			if type(block) in [tuple, list]:
 				trials = block[1]
 				block = block[0]
+			block_type = block.split("-")[-1]
+			exp_factors = self.block_types[block_type]._factors
 			blocks += self.exp.trial_factory.trial_generator(exp_factors, 1, trials)
 
 		return blocks
@@ -342,8 +335,8 @@ class TraceLabSession(EnvAgent):
 		P.blocks_per_experiment = len(current_session)
 		for block in current_session:
 			cond = block if isinstance(block, str) else block[0]
-			resp, fb = self.parse_exp_condition(cond)
-			self.exp.block_factors.append({'response_type': resp, 'feedback_type': fb})
+			resp = self.parse_exp_condition(cond)
+			self.exp.block_factors.append({'response_type': resp})
 
 		# Generate trials and import the figure set specified earlier
 		self.init_figure_set()
@@ -437,45 +430,46 @@ class TraceLabSession(EnvAgent):
 		self.exp.trial_factory.exp_factors['figure_name'] = figure_set.to_list()
 
 
-	def validate_block_condition(self, condition):
+	def validate_block(self, block):
 
-		err_type = None
-		args = condition.split("-")
+		# Check for bad trial count specification
+		if type(block) in [tuple, list]:
+			if not (isinstance(block[1], int) and block[1] > 0):
+				err = ("Custom trial counts must be specified in (blocktype, trials) "
+					"format, where 'trials' is a positive integer.")
+				return err
+			block = block[0]
+		
+		# Check for bad format or unknown condition/block type
+		args = block.split("-")
 		if len(args) != 2:
-			err_type = "bad_format"
-		else:
-			response, feedback = args
-			# Validate feedback format
-			feedback = list(feedback)
-			for i in feedback:
-				if i not in ["V", "R", "X", "S"] or len(feedback) > 2:
-					err_type = "bad_feedback"
-			# Validate condition format
-			if response not in ["PP", "MI", "CC"]:
-				err_type = "bad_condition"
+			err = "Response type and feedback type must be separated by a single hyphen."
+			return err
 
-		return err_type
+		# Validate condition format
+		response, block_type = args
+		if response not in ["PP", "MI", "CC"]:
+			err = ("Response type must be either 'PP' (physical), 'MI' (imagery), or "
+				"'CC' (control).")
+			return err
+
+		# Validate block type
+		if block_type not in self.block_types.keys():
+			err = "Suffix must match one of the block types defined in the project settings: "
+			err += str(list(self.block_types.keys()))
+			return err
+
+		return None
 
 
 	def parse_exp_condition(self, condition):
 
-		response, feedback = condition.split("-")
+		response, block_type = condition.split("-")
 
 		resp_map = {'PP': "physical", 'MI': "imagery", 'CC': "control"}
 		resp = resp_map[response]
 
-		if "V" in feedback and "R" in feedback:
-			fb = FB_ALL
-		elif "R" in feedback:
-			fb = FB_RES
-		elif "S" in feedback:
-			fb = FB_SHAPE
-		elif "V" in feedback:
-			fb = FB_DRAW
-		else:
-			fb = "False"
-
-		return [resp, fb]
+		return resp
 
 
 	@property
