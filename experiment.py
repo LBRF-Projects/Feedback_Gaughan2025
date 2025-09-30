@@ -217,8 +217,11 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 		else:
 			hide_cursor()
 
+		# Get figure-feedback mapping for current participant
+		self.feedback_map = P.feedback_map[self.session_structure]
+
 		# Import all pre-generated figures needed for the current session
-		figures = list(set(self.trial_factory.exp_factors["figure_name"]))
+		figures = list(set(self.feedback_map.values()))
 		figures.append(P.practice_figure)
 		self.sim_feedback = {}
 		for f in figures:
@@ -300,6 +303,8 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 		if self.figure_name == "random":
 			self.figure = self._generate_figure(duration=self.animate_time)
 		else:
+			if self.figure_name == "custom_map":
+				self.figure_name = self.feedback_map[self.feedback_type]
 			self.figure = self.test_figures[self.figure_name]
 			self.figure.animate_target_time = self.animate_time
 			self.figure.prepare_animation()

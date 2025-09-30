@@ -61,6 +61,12 @@ conditions = []
 default_condition = None
 table_defaults = {}
 
+feedback_map = {
+    'a': {'none': "template_26", 'shape_only': "template_31", 'results': "template_44"},
+    'b': {'none': "template_44", 'shape_only': "template_26", 'results': "template_31"},
+    'c': {'none': "template_31", 'shape_only': "template_44", 'results': "template_26"},
+}
+
 origin_wait_time = 3.0  # seconds
 
 ########################################
@@ -175,6 +181,12 @@ exclude_data_cols = [
 # it will automatically be used for each participant without prompting.
 session_structures = {
     'a': [
-        ['MI-XX', 'MI-XX', 'MI-XX', 'MI-XX', 'PP-XX'] # session 1
+        ['MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'PP-XX'], # session 1
+    ],
+    'b': [
+        ['MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'PP-XX'], # session 1
+    ],
+    'c': [
+        ['MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'PP-XX'], # session 1
     ]
 }
