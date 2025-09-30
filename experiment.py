@@ -23,7 +23,7 @@ from klibs.KLText import add_text_style
 from klibs.KLCommunication import user_queries, message, query
 
 from TraceLabSession import TraceLabSession
-from TraceLabFigure import TraceLabFigure, save_figure, save_template
+from TraceLabFigure import TraceLabFigure, save_figure, save_template, load_tracing
 from ButtonBar import ButtonBar
 from responselisteners import DrawingListener, DrawSurface
 from instructions import play_tutorial
@@ -220,11 +220,19 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 		# Import all pre-generated figures needed for the current session
 		figures = list(set(self.trial_factory.exp_factors["figure_name"]))
 		figures.append(P.practice_figure)
+		self.sim_feedback = {}
 		for f in figures:
 			if f != "random":
 				ui_request()
 				fig_path = os.path.join(P.resources_dir, "figures", f)
 				self.test_figures[f] = TraceLabFigure(fig_path, handedness = self.handedness)
+				# If simulated feedback exists for the figure, import it
+				feedback_dir = os.path.join(fig_path, "feedback")
+				if os.path.isdir(feedback_dir):
+					pattern = "s{0}".format(P.session_number)
+					feedback = load_feedback(feedback_dir, pattern)
+					if len(feedback):
+						self.sim_feedback[f] = list(feedback.values())
 
 
 	def block(self):
@@ -297,6 +305,11 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 			self.figure.animate_target_time = self.animate_time
 			self.figure.prepare_animation()
 		self.figure.render()
+
+		# Load simulated feedback for repeated shape if required
+		if self.response_type == IMAG and self.feedback_type in (FB_RES, FB_ALL):
+			if self.figure_name in self.sim_feedback.keys():
+				self.drawing = self.sim_feedback[self.figure_name][0]
 
 		# Initialize origin position and origin boundaries based on the loaded figure
 		self.origin_pos = list(self.figure.points[0])
@@ -679,6 +692,21 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 		]
 		return "p{0}_s{4}_b{1}_t{2}_{3}".format(*file_name_data)
 
+
+
+def load_feedback(path, pattern=None):
+	# Imports simulated feedback files for a given figure, optionally 
+	# filtering by pattern
+	tracings = {}
+	for file in os.listdir(path):
+		if file[-4:] != ".csv":
+			continue
+		if pattern and pattern not in file:
+			continue
+		fpath = os.path.join(path, file)
+		fname = file.replace(".csv", "")
+		tracings[fname] = load_tracing(fpath)
+	return tracings
 
 
 def fast_rect(x1, y1, x2, y2, color):

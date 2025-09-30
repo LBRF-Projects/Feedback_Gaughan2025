@@ -7,6 +7,7 @@ import math
 from itertools import chain
 from random import random, randrange, uniform, choice, shuffle
 
+import csv
 import zipfile
 import tempfile
 import aggdraw
@@ -125,6 +126,18 @@ def save_template(outpath, figure):
 	write_file(outpath, basename + ".tlfs", segments)
 	imgpath = os.path.join(outpath, basename + "_preview.png")
 	Image.fromarray(figure.render()).save(imgpath, 'PNG')
+
+
+def load_tracing(path):
+	points = []
+	figure_res = (1920, 1080)
+	with io.open(path, "r", encoding='utf-8') as csvfile:
+		trace_csv = csv.reader(csvfile)
+		next(trace_csv) # skip header
+		for x, y in trace_csv:
+			scaled = scale((float(x), float(y)), figure_res)
+			points.append(scaled)
+	return points
 
 
 
