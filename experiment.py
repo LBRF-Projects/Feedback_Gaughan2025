@@ -388,7 +388,8 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 
 		if not self.__practicing__:
 			outpath = os.path.join(self.fig_dir, self.file_name + ".zip")
-			save_figure(outpath, self.figure, self.a_frames, self.drawing)
+			drawing = self.drawing if self.response_type == PHYS else None
+			save_figure(outpath, self.figure, self.a_frames, drawing)
 
 
 	def clean_up(self):
