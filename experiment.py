@@ -307,8 +307,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 			if self.figure_name == "custom_map":
 				self.figure_name = self.feedback_map[self.feedback_type]
 			self.figure = self.test_figures[self.figure_name]
-			self.figure.animate_target_time = self.animate_time
-			self.figure.prepare_animation()
+			self.figure.prepare_animation(self.animate_time)
 		self.figure.render()
 
 		# Load simulated feedback for repeated shape if required
@@ -559,9 +558,9 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 		while not figure:
 			ui_request()
 			try:
-				figure = TraceLabFigure(animate_time = duration, handedness = self.handedness)
+				figure = TraceLabFigure(handedness = self.handedness)
 				figure.render()
-				figure.prepare_animation()
+				figure.prepare_animation(duration)
 			except RuntimeError as e:
 				print(e)
 				failures += 1
