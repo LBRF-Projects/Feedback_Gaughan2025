@@ -4,8 +4,8 @@ from klibs.KLStructure import FactorSet
 # Initialize names and levels of experiment factors
 
 exp_factors = FactorSet({
-    "animate_time": [500, 1000, 1500, 2000, 2500],
-    "figure_name": ["template_26", "template_31", "template_44"],
+    "animate_time": [1500, 2000, 2500],
+    "figure_name": ["random", "template_26", "template_31", "template_44"],
     "feedback_type": ["none"],
 })
 
@@ -33,10 +33,16 @@ exp_factors_mixed = exp_factors.override({
     "feedback_type": ["none", "shape_only", "results"],
 })
 
+exp_factors_practice = exp_factors.override({
+    "figure_name": ["random"],
+    "feedback_type": ["none", "shape_only", "results"],
+})
+
 
 # Define map of different block types
 
 block_types = {
+    "Practice": exp_factors_practice,
     "F3": exp_factors_mixed,
     "VR": exp_factors_vr,
     "VX": exp_factors_vx,

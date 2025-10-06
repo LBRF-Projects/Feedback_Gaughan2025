@@ -56,7 +56,7 @@ experiment_complete_message = (
 # Experiment Structure
 #########################################
 multi_session_project = True
-trials_per_block = 20
+trials_per_block = 18
 conditions = []
 default_condition = None
 table_defaults = {}
@@ -162,12 +162,14 @@ exclude_data_cols = [
 #  - "MI" (motor imagery response)
 #  - "CC" (control / motion direction judgement response)
 #
-# Feedback types:
+# Block types:
 #  - "X" / "XX"  (no feedback)
 #  - "V" / "VX"  (live tracing feedback during tracing response)
 #  - "R" / "XR"  (presentation of target shape with tracing overlay after response made)
 #  - "S" / "XS"  (presentation of target shape only after response made)
 #  - "VR"        (both "R" and "V")
+#  - "F3"        ("R", "S", and "X" intermixed depending on repeated shape)
+#  - "Practice"  ("R", "S", and "X" intermixed, random shapes only)
 #
 # Custom trial counts:
 #  To override the default trials_per_block for a given block, you can specify the block
@@ -181,12 +183,48 @@ exclude_data_cols = [
 # it will automatically be used for each participant without prompting.
 session_structures = {
     'a': [
-        ['MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'PP-XX'], # session 1
+        # Session 1
+        ['PP-Practice',
+         'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3'],
+        # Session 2
+        ['MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3'],
+        # Session 3
+        ['MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3'],
+        # Session 4
+        ['MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3'],
+        # Session 5
+        ['MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3',
+         ('PP-XX', 24), ('PP-XX', 24), ('PP-XX', 24),
+         ('PP-XX', 24), ('PP-XX', 24)]
     ],
     'b': [
-        ['MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'PP-XX'], # session 1
+        # Session 1
+        ['PP-Practice',
+         'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3'],
+        # Session 2
+        ['MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3'],
+        # Session 3
+        ['MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3'],
+        # Session 4
+        ['MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3'],
+        # Session 5
+        ['MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3',
+         ('PP-XX', 24), ('PP-XX', 24), ('PP-XX', 24),
+         ('PP-XX', 24), ('PP-XX', 24)]
     ],
     'c': [
-        ['MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'PP-XX'], # session 1
-    ]
+        # Session 1
+        ['PP-Practice',
+         'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3'],
+        # Session 2
+        ['MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3'],
+        # Session 3
+        ['MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3'],
+        # Session 4
+        ['MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3'],
+        # Session 5
+        ['MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3',
+         ('PP-XX', 24), ('PP-XX', 24), ('PP-XX', 24),
+         ('PP-XX', 24), ('PP-XX', 24)]
+    ],
 }
