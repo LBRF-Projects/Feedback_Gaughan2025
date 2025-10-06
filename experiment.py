@@ -338,7 +338,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 			flip()
 
 		animate_start = time.perf_counter()
-		self.a_frames = self.animate_figure(self.figure, P.show_figure_at_onset)
+		self.a_frames = self.animate_figure(self.figure)
 		animate_time = time.perf_counter() - animate_start
 		avg_velocity = self.figure.path_length / animate_time
 
