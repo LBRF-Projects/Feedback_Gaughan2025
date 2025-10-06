@@ -248,6 +248,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 
 		# Get response type and feedback type for block
 		self.response_type = self.block_factors[P.block_number - 1]['response_type']
+		self.block_type = self.block_factors[P.block_number - 1]['block_type']
 
 		# If on first block of session, or response type is different from response type of
 		# previous block, do tutorial animation and practice
@@ -349,11 +350,14 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 		else:
 			self.control_trial()
 
-		if self.feedback_type in (FB_ALL, FB_RES, FB_SHAPE) and not self.__practicing__:
+		show_feedback = self.feedback_type in (FB_ALL, FB_RES, FB_SHAPE)
+		blank_feedback = self.block_type in ("F3", "Practice")
+		if (show_feedback or blank_feedback) and not self.__practicing__:
 			flush()
 			fill()
-			tracing = None if self.feedback_type == FB_SHAPE else self.drawing
-			blit(self.figure.render(trace=tracing), 5, P.screen_c)
+			if show_feedback:
+				tracing = None if self.feedback_type == FB_SHAPE else self.drawing
+				blit(self.figure.render(trace=tracing), 5, P.screen_c)
 			draw_borders(P.border_size, WHITE)
 			flip()
 			start = time.time()
