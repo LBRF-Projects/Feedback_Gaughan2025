@@ -335,8 +335,8 @@ class TraceLabSession(EnvAgent):
 		P.blocks_per_experiment = len(current_session)
 		for block in current_session:
 			cond = block if isinstance(block, str) else block[0]
-			resp = self.parse_exp_condition(cond)
-			self.exp.block_factors.append({'response_type': resp})
+			resp, b_type = self.parse_exp_condition(cond)
+			self.exp.block_factors.append({'response_type': resp, 'block_type': b_type})
 
 		# Generate trials and import the figure set specified earlier
 		self.init_figure_set()
@@ -469,7 +469,7 @@ class TraceLabSession(EnvAgent):
 		resp_map = {'PP': "physical", 'MI': "imagery", 'CC': "control"}
 		resp = resp_map[response]
 
-		return resp
+		return resp, block_type
 
 
 	@property
