@@ -228,12 +228,18 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 			if f != "random":
 				ui_request()
 				fig_path = os.path.join(P.resources_dir, "figures", f)
-				self.test_figures[f] = TraceLabFigure(fig_path, handedness = self.handedness)
+				mirror = f in P.mirror_figures
+				if self.handedness == "l":
+					mirror = (mirror == False)
+				clockwise = self.handedness != "l"
+				self.test_figures[f] = TraceLabFigure(
+					fig_path, mirror=mirror, clockwise=clockwise
+				)
 				# If simulated feedback exists for the figure, import it
 				feedback_dir = os.path.join(fig_path, "feedback")
 				if os.path.isdir(feedback_dir):
 					pattern = "s{0}".format(P.session_number)
-					feedback = load_feedback(feedback_dir, pattern)
+					feedback = load_feedback(feedback_dir, pattern, mirror)
 					if len(feedback):
 						self.sim_feedback[f] = list(feedback.values())
 
@@ -552,13 +558,14 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 
 	def _generate_figure(self, duration):
 
+		mirror = self.handedness == "l"
 		failures = 0
 		figure = None
 		gen_start = time.time()
 		while not figure:
 			ui_request()
 			try:
-				figure = TraceLabFigure(handedness = self.handedness)
+				figure = TraceLabFigure(mirror=mirror)
 				figure.render()
 				figure.prepare_animation(duration)
 			except RuntimeError as e:
@@ -702,7 +709,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 
 
 
-def load_feedback(path, pattern=None):
+def load_feedback(path, pattern=None, mirror=False):
 	# Imports simulated feedback files for a given figure, optionally 
 	# filtering by pattern
 	tracings = {}
@@ -713,7 +720,7 @@ def load_feedback(path, pattern=None):
 			continue
 		fpath = os.path.join(path, file)
 		fname = file.replace(".csv", "")
-		tracings[fname] = load_tracing(fpath)
+		tracings[fname] = load_tracing(fpath, mirror)
 	return tracings
 
 
