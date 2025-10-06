@@ -14,7 +14,7 @@ force_show_cursor = False # If False, cursor hidden unless in devmode & no touch
 mirror_mode = False
 enable_learned_figures_querying = True
 use_figure_sets = False
-show_figure_at_onset = False
+show_figure_at_onset = True
 
 capture_figures_mode = False
 auto_generate = False  # whether to generate figures without prompting in capture mode
