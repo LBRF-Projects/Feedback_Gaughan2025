@@ -22,6 +22,7 @@ from klibs.KLCommunication import user_queries, message, query
 from TraceLabSession import TraceLabSession
 from TraceLabFigure import TraceLabFigure, save_figure, save_template, load_tracing
 from utils import draw_borders, touchscreen_detected
+from InterfaceExtras import LikertPrompt, Aesthetics
 from ButtonBar import ButtonBar
 from responselisteners import DrawingListener, DrawSurface
 from instructions import play_tutorial
@@ -124,6 +125,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 	def setup(self):
 
 		# Set up custom text styles for the experiment
+		add_text_style('large', '20px', color=WHITE)
 		add_text_style('instructions', 18, color=WHITE)
 		add_text_style('error', 18, color=RED)
 		add_text_style('tiny', 12, color=WHITE)
@@ -206,6 +208,31 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 		self.practice_button_bar = ButtonBar(
 			["Replay", "Practice", "Begin"],
 			[200, 100], P.btn_s_pad, P.y_pad, finish_button=False
+		)
+
+		# Set up Likert-type scales for collecting imagery accuracy/vividness ratings
+		scale_width = int(P.screen_x * 0.60)
+		scale_aes = Aesthetics(fill=(128, 128, 128, 64), fontstyle="large")
+		acc_msg_pp = message("How accurate do you think your drawing was?", "large")
+		acc_msg_mi = message("How accurate was the drawing you imagined?", "large")
+		acc_msg_mi_fb = message(
+			"How closely did your imagined drawing match the blue feedback?", "large"
+		)
+		vividness_msg = message(
+			"How vivid was your motor imagery over the last block of trials?", "large"
+		)
+		
+		self.acc_rating_pp = LikertPrompt(
+			1, 10, acc_msg_pp, width=scale_width, origin=P.screen_c, aes=scale_aes
+		)
+		self.acc_rating_mi = LikertPrompt(
+			1, 10, acc_msg_mi, width=scale_width, origin=P.screen_c, aes=scale_aes
+		)
+		self.acc_rating_mi_fb = LikertPrompt(
+			1, 10, acc_msg_mi_fb, width=scale_width, origin=P.screen_c, aes=scale_aes
+		)
+		self.vividness_rating = LikertPrompt(
+			1, 10, vividness_msg, width=scale_width, origin=P.screen_c, aes=scale_aes
 		)
 
 		# Determine whether cursor should be shown or hidden
@@ -353,6 +380,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 		else:
 			self.control_trial()
 
+		# Enter feedback period if block contains any results/shape feedback
 		show_feedback = self.feedback_type in (FB_ALL, FB_RES, FB_SHAPE)
 		blank_feedback = self.block_type in ("F3", "Practice")
 		if (show_feedback or blank_feedback) and not self.__practicing__:
@@ -367,12 +395,25 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 			while time.time() - start < P.feedback_duration / 1000.0:
 				ui_request()
 
-		fill()
-		draw_borders(P.border_size, WHITE)
-		flip()
-
 		if self.__practicing__:
 			return
+
+		# Collect post-trial ratings if required
+		acc_rating = "NA"
+		vivid_rating = "NA"
+		if self.response_type == PHYS and self.block_type != "Practice":
+			# Collect accuracy rating after each physical trial
+			acc_rating, acc_rt = self.acc_rating_pp.collect()
+
+		elif self.response_type == IMAG:
+			# Collect accuracy rating after each imagery trial
+			if self.feedback_type == FB_RES:
+				acc_rating, acc_rt = self.acc_rating_mi_fb.collect()
+			else:
+				acc_rating, acc_rt = self.acc_rating_mi.collect()
+			# On the last trial of each imagery block, get MI vividness rating
+			if P.trial_number == P.trials_per_block:
+				vivid_rating, vivid_rt = self.vividness_rating.collect()
 
 		return {
 			"session_num": self.session_number,
@@ -391,7 +432,9 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 			"it": self.it,
 			"control_question": self.control_question if self.response_type == CTRL else 'NA',
 			"control_response": self.control_response,
-			"mt": self.mt
+			"mt": self.mt,
+			"acc_rating": acc_rating,
+			"vivid_rating": vivid_rating,
 		}
 
 
