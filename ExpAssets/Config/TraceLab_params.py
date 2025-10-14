@@ -68,7 +68,7 @@ feedback_map = {
     'c': {'none': "template_31", 'shape_only': "template_44", 'results': "template_26"},
 }
 
-origin_wait_time = 3.0  # seconds
+origin_wait_time = 2.0  # seconds
 
 ########################################
 # Practice Controls
@@ -103,7 +103,7 @@ dot_stroke_col = (255, 255, 255)
 ########################################
 response_feedback_color = (0, 255, 255)
 stimulus_feedback_color = (211, 211, 211)
-feedback_duration = 2000  # ms
+feedback_duration = 2.0 # seconds
 ignore_points_at = [(1919,1079),(119,1079),(239,1079)]  # list of (x,y) coordinates to be removed
 
 ########################################

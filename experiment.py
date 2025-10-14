@@ -351,6 +351,12 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 			if self.figure_name in self.sim_feedback.keys():
 				self.drawing = self.sim_feedback[self.figure_name][0]
 
+		# Determine duration of shape at onset based on block/trial type
+		self.shape_duration = P.origin_wait_time
+		if self.block_type == "F3" and self.feedback_type == "none":
+			# If no feedback shown after, keep total shape exposure consistent
+			self.shape_duration += P.feedback_duration
+
 		# Initialize origin position and origin boundaries based on the loaded figure
 		self.origin_pos = list(self.figure.points[0])
 		origin_bounds = CircleBoundary('origin', self.origin_pos, P.origin_size // 2)
@@ -363,7 +369,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 
 	def trial(self):
 
-		start_delay = CountDown(P.origin_wait_time)
+		start_delay = CountDown(self.shape_duration)
 		while start_delay.counting():
 			ui_request()
 			fill()
@@ -397,7 +403,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 			draw_borders(P.border_size, WHITE)
 			flip()
 			start = time.time()
-			while time.time() - start < P.feedback_duration / 1000.0:
+			while time.time() - start < P.feedback_duration:
 				ui_request()
 
 		if self.__practicing__:
