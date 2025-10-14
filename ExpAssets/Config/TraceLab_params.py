@@ -9,7 +9,7 @@ collect_demographics = True
 manual_demographics_collection = True
 manual_trial_generation = True
 run_practice_blocks = False
-force_show_cursor = False # If False, cursor hidden unless in devmode & no touchscreen
+force_show_cursor = True # If False, cursor hidden unless in devmode & no touchscreen
 
 mirror_mode = False
 enable_learned_figures_querying = True
@@ -148,6 +148,7 @@ unique_identifier = "user_id"
 exclude_data_cols = [
     'klibs_commit', 'created', 'session_count', 'sessions_completed', 'initialized'
 ]
+append_hostname = True
 
 #########################################
 # Session & Block Structures
@@ -200,7 +201,7 @@ session_structures = {
     ],
     'b': [
         # Session 1
-        ['PP-Practice',
+        [#'PP-Practice',
          'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3'],
         # Session 2
         ['MI-F3', 'MI-F3', 'MI-F3', 'MI-F3', 'MI-F3'],

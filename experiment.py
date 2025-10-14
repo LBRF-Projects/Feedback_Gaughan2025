@@ -20,7 +20,7 @@ from klibs.KLCommunication import user_queries, message, query
 
 from TraceLabSession import TraceLabSession
 from TraceLabFigure import TraceLabFigure, save_figure, save_template, load_tracing
-from utils import draw_borders, touchscreen_detected
+from utils import draw_borders, touchscreen_detected, get_hostname
 from InterfaceExtras import LikertPrompt, Aesthetics
 from ButtonBar import ButtonBar
 from responselisteners import DrawingListener, DrawSurface
@@ -157,6 +157,9 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 		# Initialize participant ID and session options, reloading ID if it already exists
 		self.session = TraceLabSession()
 		self.user_id = self.session.user_id
+		self.filename_id = str(P.participant_id)
+		if P.append_hostname:
+			self.filename_id += "-{0}".format(get_hostname())
 
 		# Add flags for first block/trial of run, needed for resuming mid-session
 		self.first_block = True
@@ -701,7 +704,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 
 	def capture_learned_figure(self, fig_number):
 
-		outfile = "p{0}_learned_figure_{1}.zip".format(P.participant_id, fig_number)
+		outfile = "p{0}_learned_figure_{1}.zip".format(self.filename_id, fig_number)
 		outpath = os.path.join(self.fig_dir, outfile)
 		self.live_feedback = None
 		self.display_refresh()
@@ -739,7 +742,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 	@property
 	def file_name(self):
 		file_name_data = [
-			P.participant_id, P.block_number, P.trial_number,
+			self.filename_id, P.block_number, P.trial_number,
 			now(True, "%Y-%m-%d"), self.session_number
 		]
 		return "p{0}_s{4}_b{1}_t{2}_{3}".format(*file_name_data)

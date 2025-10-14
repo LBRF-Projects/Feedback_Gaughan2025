@@ -1,3 +1,5 @@
+import socket
+
 import sdl2
 import OpenGL.GL as gl
 
@@ -46,3 +48,10 @@ def touchscreen_detected():
 		if devtype == sdl2.SDL_TOUCH_DEVICE_DIRECT:
 			return True
 	return False
+
+
+def get_hostname():
+	hostname = socket.gethostname()
+	for a, b in [(".local", ""), ("DESKTOP-", ""), (" ", "-")]:
+		hostname = hostname.replace(a, b)
+	return hostname
