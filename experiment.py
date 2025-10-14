@@ -31,6 +31,7 @@ WHITE = (255, 255, 255, 255)
 BLACK = (0, 0, 0, 255)
 RED = (255, 0, 0, 255)
 GREEN = (0, 255, 0, 255)
+DARK_RED = (128, 16, 16, 255)
 TRACE_COLOUR = (255, 80, 125, 255)
 
 # condition codes; jon hates retyping strings
@@ -535,7 +536,10 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 
 	def display_refresh(self):
 
-		fill()
+		button_down = mouse_pos(return_button_state=True)[2] > 0
+		lifted = self.draw_listener.started and not button_down
+
+		fill(DARK_RED if lifted else BLACK)
 		draw_borders(P.border_size, WHITE)
 		origin = self.origin_active if self.draw_listener.started else self.origin_inactive
 		blit(origin, 5, self.origin_pos, flip_x=P.flip_x)
