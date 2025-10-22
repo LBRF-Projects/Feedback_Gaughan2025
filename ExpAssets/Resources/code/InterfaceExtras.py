@@ -82,13 +82,14 @@ class Button(object):
         
         self.width = width
         self.height = height if height else width
-        self.msg = msg
+        self.msg = message(msg, aes.fontstyle)
 
         self.button = None
         if aes.thickness or aes.fill:
             outline = [aes.thickness, aes.color, STROKE_INNER]
-            self.button = kld.Rectangle(self.width, self.height, outline, fill=aes.fill)
-        self.button = kld.Rectangle(self.width, self.height)
+            self.button = kld.Rectangle(self.width, self.height, stroke=outline, fill=aes.fill)
+        else:
+            self.button = kld.Rectangle(self.width, self.height)
         self.hover = kld.Rectangle(self.width, self.height, fill=aes.hover)
         
         self._registration = registration
@@ -119,9 +120,9 @@ class Button(object):
         
         
     def draw(self):
-        blit(self.msg, 5, self.midpoint)
         if self.button:
             blit(self.button, 5, self.midpoint)
+        blit(self.msg, 5, self.midpoint)
         mp = mouse_pos()
         if self.bounds.within(mp):
             blit(self.hover, 5, self.midpoint)
