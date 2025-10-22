@@ -64,6 +64,32 @@ def segments_to_symbol(segments):
 	return aggdraw.Symbol(path)
 
 
+def _render_figure(segments, frames=None, trace=None):
+	"""Renders a figure (and optionally a tracing) to a texture.
+	"""
+
+	# Initialize drawing surface
+	canvas = Image.new("RGBA", P.screen_x_y, (0, 0, 0, 255))
+	surf = aggdraw.Draw(canvas)
+
+	# Draw figure to surface
+	if frames:
+		path = frames_to_path(frames, unique=True)
+		surf.path(path, aggdraw.Pen(P.stimulus_feedback_color, 1, 255))
+	else:
+		s = segments_to_symbol(segments)
+		surf.symbol((0, 0), s, aggdraw.Pen(P.stimulus_feedback_color, 1, 255))
+
+	# If tracing, draw trace to surface too
+	if trace:
+		path = frames_to_path(trace, unique=True)
+		surf.path(path, aggdraw.Pen(P.response_feedback_color, 1, 255))
+
+	# Render to numpy array and return
+	surf.flush()
+	return np.asarray(canvas)
+
+
 def save_figure(outpath, figure=None, frames=None, tracing=None):
 
 	# Define inline function for safely writing files
@@ -618,27 +644,8 @@ class TraceLabFigure(EnvAgent):
 				drawing lines between the frames from the last prepare_animation call. Defaults to
 				True.
 		"""
-
-		# Initialize drawing surface
-		canvas = Image.new("RGBA", P.screen_x_y, (0, 0, 0, 255))
-		surf = aggdraw.Draw(canvas)
-
-		# Draw figure to surface
-		if smooth:
-			s = segments_to_symbol(self.raw_segments)
-			surf.symbol((0, 0), s, aggdraw.Pen(P.stimulus_feedback_color, 1, 255))
-		else:
-			path = frames_to_path(self.a_frames, unique=True)
-			surf.path(path, aggdraw.Pen(P.stimulus_feedback_color, 1, 255))
-
-		# If tracing, draw trace to surface too
-		if trace:
-			path = frames_to_path(trace, unique=True)
-			surf.path(path, aggdraw.Pen(P.response_feedback_color, 1, 255))
-
-		# Render to numpy array and return
-		surf.flush()
-		self.rendered = np.asarray(canvas)
+		frames = None if smooth else self.a_frames 
+		self.rendered = _render_figure(self.raw_segments, frames, trace)
 		return self.rendered
 
 

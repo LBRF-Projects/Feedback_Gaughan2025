@@ -293,13 +293,17 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 			# Play tutorial for current response type & enter practice
 			if P.enable_practice:
 				if P.block_number == 1:
-					fill()
-					blit(self.practice_instructions, 5, P.screen_c)
-					flip()
-					any_key()
+					if self.session_number == 1:
+						fill()
+						blit(self.practice_instructions, 5, P.screen_c)
+						flip()
+						any_key()
+						play_tutorial(self, self.block_type)
+					else:
+						play_tutorial(self, "resume")
 				else:
 					self.start_trial_button()
-				play_tutorial(self, self.response_type)
+					play_tutorial(self, self.block_type)
 				self.practice_menu()
 
 			self.prev_response_type = self.response_type
@@ -728,7 +732,7 @@ class TraceLab(klibs.Experiment, BoundaryInspector):
 		while choice != "Begin":
 			choice, rt = self.practice_button_bar.collect()
 			if choice == "Replay":
-				play_tutorial(self, self.response_type)
+				play_tutorial(self, self.block_type)
 			elif choice == "Practice":
 				self.__practice__()
 

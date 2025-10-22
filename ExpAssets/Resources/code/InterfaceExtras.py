@@ -231,13 +231,16 @@ class LikertType(BoundaryInspector):
         y_pos = self.y1 + int(self.circle_size * 0.5)
         return (x_pos, y_pos)
 
-    def render(self):
-        # Render all items in scale
+    def blit(self):
         for num in self.range:
             pos = self._num_to_pos(num)
             if self.circle:
                 blit(self.circle, location=pos, registration=5)
             blit(self.numbers[num], location=pos, registration=5)
+
+    def render(self):
+        # Render all items in scale
+        self.blit()
         # If a response has been made, show it
         if self.response != None:
             pos = self._num_to_pos(self.response)
